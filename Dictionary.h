@@ -15,12 +15,17 @@ public:
     RBNode<K, V>* rightChild = nullptr;
 
     RBNode() {
-
+//        std::cout << "RBNode()\n";
     }
 
     RBNode(K key_, V value_) {
         key = key_;
         value = value_;
+//        std::cout << "RBNode(k,v)\n";
+    }
+
+    ~RBNode() {
+//        std::cout << "Delete self\n";
     }
 
     RBNode<K, V>* grandparent() {
@@ -44,28 +49,21 @@ public:
     }
 };
 
-// Можно считать, что тип K является упорядоченным и предоставляет
-// правильную перегрузку operator<() и operator==().
+// Тип K является упорядоченным и предоставляет
+// правильную перегрузку operator<() и operator==()
 template<typename K, typename V>
 class Dictionary final {
 private:
-    RBNode<K, V>* root_ = nullptr;
+    RBNode<K, V>* root_;
+    int size_;
 
-//    RBNode<K, V> treeNull;
-//
     RBNode<K, V>* initializeTreeNullForRemove(RBNode<K, V>* parent) {
         RBNode<K, V>* node = new RBNode<K, V>;
-//        node->key = new K();
-//        node->value = new V();
         node->parent = parent;
-//        node->leftChild = nullptr;
-//        node->rightChild = nullptr;
         node->color = BLACK;
         parent->rightChild = node;
         return node;
     }
-
-    int size_ = 0;
 
     void rotateLeftRBT(RBNode<K, V>* node) {
         RBNode<K, V>* nodeRightChild = node->rightChild; // right child exists since we want to rotate left
@@ -194,8 +192,19 @@ private:
 
     V* findValue(K key) {
         RBNode<K,V>* currNode = root_;
-//        if (currNode->key == key || currNode == nullptr)
-//            return currNode;
+        while (currNode != nullptr) {
+            if (key == currNode->key)
+                return &(currNode->value);
+            else if (key > currNode->key)
+                currNode = currNode->rightChild;
+            else
+                currNode = currNode->leftChild;
+        }
+        return nullptr;
+    }
+
+    const V* findValue(K key) const {
+        RBNode<K,V>* currNode = root_;
         while (currNode != nullptr) {
             if (key == currNode->key)
                 return &(currNode->value);
@@ -208,8 +217,6 @@ private:
     }
 
     void insert(K key, V value) {
-//        K key = node.key;
-//        V value = node.value;
         RBNode<K, V>* newNode = new RBNode<K, V>(key, value);
         RBNode<K, V>* current = root_;
 
@@ -245,22 +252,23 @@ private:
         }
     }
 
-    // Check code below
-
     RBNode<K, V>* subTreeMin(RBNode<K, V>* node) {
         RBNode<K, V>* currNode = node;
         while (currNode->leftChild != nullptr) {
             currNode = currNode->leftChild;
         }
         return currNode;
-//        if (node->leftChild == nullptr)
-//            return node;
-//        else
-//            return subTreeMin(node->leftChild);
+    }
+
+    RBNode<K, V>* subTreeMax(RBNode<K, V>* node) {
+        RBNode<K, V>* currNode = node;
+        while (currNode->rightChild != nullptr) {
+            currNode = currNode->rightChild;
+        }
+        return currNode;
     }
 
     void transplant(RBNode<K, V>* prevNode, RBNode<K, V>* newNode) {
-        ///
         if (prevNode->parent == nullptr) {
             root_ = newNode;
         } else {
@@ -274,48 +282,15 @@ private:
         if (newNode != nullptr) {
             newNode->parent = prevNode->parent;
         }
-
-
-        ///
-//        if (prevNode == root_) {
-//            root_ = newNode;
-//        }
-//        else {
-//            RBNode<K, V>* parent = prevNode->parent;
-//            if (prevNode == parent->leftChild)
-//                parent->leftChild = newNode;
-//            else
-//                parent->rightChild = newNode;
-//
-//        }
-//
-//        ///
-//        if (newNode != nullptr) {
-//            newNode->parent = prevNode->parent;
-//            RBNode<K, V>* leftChild = prevNode->leftChild;
-//            RBNode<K, V>* rightChild = prevNode->rightChild;
-//            if (leftChild != nullptr) {
-//                leftChild->parent = newNode;
-//                newNode->leftChild = leftChild;
-//            }
-//            if (rightChild != nullptr) {
-//                rightChild->parent = newNode;
-//                newNode->rightChild = rightChild;
-//            }
-//        }
     }
 
     void deleteFixup(RBNode<K, V>* node) {
         RBNode<K, V>* currNode = node;
-//        while (currNode->color == BLACK) {
         while (currNode != root_ && currNode->color == BLACK) {
-//            RBNode<K, V>* currParent = currNode->parent;
             if (currNode->parent == nullptr)
                 break;
 
             if (currNode->parent->leftChild == currNode) { // if the node is or was left child
-//            if (currNode->parent->leftChild == currNode) { // won't work after the transplant
-//            if (currParent->leftChild == currNode || currParent->leftChild == nullptr) {
                 RBNode<K, V>* sibling = currNode->parent->rightChild;
                 if (sibling != nullptr) {
                     if (sibling->color == RED) {
@@ -327,23 +302,16 @@ private:
                     }
                 }
 
-//                RBNode<K, V>* siblingLeftChild = sibling->leftChild;
-//                RBNode<K, V>* siblingRightChild = sibling->rightChild;
                 if ((sibling->leftChild == nullptr || sibling->leftChild->color == BLACK)
                 && (sibling->rightChild == nullptr || sibling->rightChild->color == BLACK)) {
-//                if ((siblingLeftChild->color == BLACK || siblingLeftChild == nullptr)
-//                && (siblingRightChild->color == BLACK || siblingRightChild == nullptr)) {
                     sibling->color = RED;
                     currNode = currNode->parent;
                 } else {
                     if ( sibling->rightChild->color == BLACK) {
-//                    if ( siblingRightChild->color == BLACK || siblingRightChild == nullptr) {
                         sibling->leftChild->color = BLACK;
                         sibling->color = RED;
                         rotateRightRBT(sibling);
                         sibling = currNode->parent->rightChild;
-//                        siblingLeftChild = sibling->leftChild;
-//                        siblingRightChild = sibling->rightChild;
                     }
                     sibling->color = currNode->parent->color;
                     currNode->parent->color = BLACK;
@@ -359,25 +327,16 @@ private:
                     rotateRightRBT(currNode->parent);
                     sibling = currNode->parent->leftChild;
                 }
-//                RBNode<K, V>* siblingLeftChild = sibling->leftChild;
-//                RBNode<K, V>* siblingRightChild = sibling->rightChild;
                 if ((sibling->leftChild == nullptr || sibling->leftChild->color == BLACK)
                 && (sibling->rightChild == nullptr || sibling->rightChild->color == BLACK)) { // what if sibling's children are nullptr?
-//                if ((siblingLeftChild->color == BLACK || siblingLeftChild == nullptr)
-//                && (siblingRightChild->color == BLACK || siblingRightChild == nullptr)) {
                     sibling->color = RED;
                     currNode = currNode->parent;
                 } else {
                     if (sibling->leftChild->color == BLACK) {
-//                    if (sibling->leftChild->color == BLACK || sibling->leftChild == nullptr) {
                         sibling->rightChild->color = BLACK;
                         sibling->color = RED;
                         rotateLeftRBT(sibling);
                         sibling = currNode->parent->leftChild;
-//                        RBNode<K, V>* newParent = currNode->parent;
-//                        sibling = newParent->leftChild;
-//                        sibling->leftChild = sibling->leftChild;
-//                        sibling->rightChild = sibling->rightChild;
                     }
                     sibling->color = currNode->parent->color;
                     currNode->parent->color = BLACK;
@@ -389,8 +348,6 @@ private:
         }
         currNode->color = BLACK;
     }
-
-    // Check code above
 
     int getSubtreeHeight(RBNode<K, V>* node) {
         if (node == nullptr)
@@ -441,6 +398,53 @@ private:
         return output;
     }
 
+    RBNode<K, V>* getFirstElement() {
+        RBNode<K, V>* currNode = root_;
+        if (currNode == nullptr)
+            return currNode;
+        while (currNode->leftChild != nullptr)
+            currNode = currNode->leftChild;
+        return currNode;
+    }
+
+    RBNode<K, V>* nextNode(RBNode<K, V>* node) {
+        RBNode<K, V>* currNode = node;
+        if (node->rightChild != nullptr)
+            currNode = subTreeMin(node->rightChild);
+        else {
+            while (currNode->parent != nullptr) {
+                if (currNode == currNode->parent->leftChild) {
+                    currNode = currNode->parent;
+                    break;
+                }
+                currNode = currNode->parent;
+            }
+        }
+        if (currNode->key < node->key) // если это был самый крайний правый элемент, мы поднялись до корня, но ничего не нашли
+            return node;
+        else
+            return currNode;
+    }
+
+    RBNode<K, V>* prevNode(RBNode<K, V>* node) {
+        RBNode<K, V>* currNode = node;
+        if (node->leftChild != nullptr)
+            currNode = subTreeMax(node->leftChild);
+        else {
+            while (currNode->parent != nullptr) {
+                if (currNode == currNode->parent->rightChild) {
+                    currNode = currNode->parent;
+                    break;
+                }
+                currNode = currNode->parent;
+            }
+        }
+        if (currNode->key > node->key) // если это был самый крайний левый элемент, мы поднялись до корня
+            return node;
+        else
+            return currNode;
+    }
+
 public:
 
     std::string treeToString() {
@@ -456,8 +460,6 @@ public:
 
     RBNode<K,V>* find(K key) {
         RBNode<K,V>* currNode = root_;
-//        if (currNode->key == key || currNode == nullptr)
-//            return currNode;
         while (currNode != nullptr) {
             if (key == currNode->key)
                 return currNode;
@@ -482,64 +484,93 @@ public:
     }
 
     class Iterator {
+    private:
+        Dictionary<K, V>& dictionary_;
+        RBNode<K, V>* currentElement_;
+
+    public:
+        Iterator(Dictionary<K, V>& d): dictionary_(d) {
+            currentElement_ = dictionary_.getFirstElement();
+        }
+
         // Получает ключ в текущей позиции итератора
-        const K& key() const;
+        const K& key() const {
+            return currentElement_->key;
+        }
 
-        const V& get() const;
         // Получает значение в текущей позиции итератора
+        const V& get() const {
+            return currentElement_->value;
+        }
 
-        void set(const V& value);
-//        Устанавливает значение в текущей позиции итератора, сохраняя значение
-//                ключа. Ключ отдельно изменить нельзя.
+        // Устанавливает значение в текущей позиции итератора, сохраняя значение
+        // ключа. Ключ отдельно изменить нельзя.
+        void set(const V& value) {
+            currentElement_->value = value;
+        }
 
-        void next();
-//        Перемещает текущую позицию итератора на следующий элемент
-//                ассоциативного массива. Порядок обхода неважен, но итератор должен
-//                гарантировать, что будут просмотрены все элементы массива, и каждый
-//        элемент будет встречен только один раз.
+        // Перемещает текущую позицию итератора на следующий элемент.
+        void next() {
+            currentElement_ = dictionary_.nextNode(currentElement_);
+        }
 
-        void prev();
-//        Перемещает текущую позицию итератора на предыдущий элемент.
+        // Перемещает текущую позицию итератора на предыдущий элемент.
+        void prev() {
+            currentElement_ = dictionary_.prevNode(currentElement_);
+        }
 
-        bool hasNext() const;
-//        Возвращает true, если итератор может перейти к следующему элементу,
-//        или false, если итератор позиционирован на последний элемент.
+        // Возвращает true, если итератор может перейти к следующему элементу,
+        // или false, если итератор позиционирован на последний элемент.
+        bool hasNext() const {
+            return currentElement_ != dictionary_.nextNode(currentElement_);
+        }
 
-        bool hasPrev() const;
-//        Возвращает true, если итератор может перейти к предыдущему элементу,
-//        или false, если итератор позиционирован на первый элемент.
 
+        // Возвращает true, если итератор может перейти к предыдущему элементу,
+        // или false, если итератор позиционирован на первый элемент.
+        bool hasPrev() const {
+            return currentElement_ != dictionary_.prevNode(currentElement_);
+        }
 
     };
 
     Dictionary() {
-
-    } // Создает пустой ассоциативный массив.
-
-    // Деструктор освобождает память, выделенную под хранение элементов. При
-    // необходимости, при освобождении памяти вызываются деструкторы
-    // хранимых элементов.
-    ~Dictionary() {
-
+        root_ = nullptr;
+        size_ = 0;
+//        std::cout << "Dictionary()\n";
     }
 
-//    Добавляет переданную пару ключ-значение в ассоциативный массив. Если
-//    такой ключ уже существует, связанное с ним значение должно быть
-//    заменено на переданное
+    ~Dictionary() {
+        if (root_ != nullptr)
+            deleteNodeAndChildren(root_);
+//        std::cout << "~Dictionary()\n";
+    }
+
+    void deleteNodeAndChildren(RBNode<K, V>* node) {
+        if (node->leftChild != nullptr) {
+//            std::cout << "Delete left\n";
+            deleteNodeAndChildren(node->leftChild);
+        }
+        if (node->rightChild != nullptr) {
+//            std::cout << "Delete right\n";
+            deleteNodeAndChildren(node->rightChild);
+        }
+//        std::cout << "Delete self\n";
+        delete node;
+    }
+
+    // Добавляет переданную пару ключ-значение в ассоциативный массив. Если
+    // такой ключ уже существует, связанное с ним значение должно быть
+    // заменено на переданное
     void put(const K& key, const V& value) {
         insert(key, value);
     }
 
     // Удаляет элемент с указанным ключом из ассоциативного массива
-    void remove(const K& key) { // !!! CHECK
+    void remove(const K& key) {
         RBNode<K, V>* delNode = find(key); // z in CLRS
         if (delNode == nullptr)
             return;
-//        if (delNode == root_) { // WRONG!
-//            root_ = nullptr;
-//            size_--;
-//            return;
-//        }
 
         RBNode<K, V>* successorNode = delNode; // y in CLRS
         RBNode<K, V>* x = nullptr; // x in CLRS
@@ -547,7 +578,6 @@ public:
 
         bool wasCreatedNil = false;
 
-        ///
         if (delNode->leftChild == nullptr && delNode->rightChild == nullptr) {
             if (delNode == root_) {
                 root_ = nullptr;
@@ -555,7 +585,6 @@ public:
                 return;
             }
         }
-        ///
 
         if (delNode->leftChild == nullptr) {
             x = delNode->rightChild; // may be null
@@ -565,48 +594,31 @@ public:
             }
             transplant(delNode, x);
         } else if (delNode->rightChild == nullptr) {
-            x = delNode->leftChild; // is not null!
+            x = delNode->leftChild; // is not null
             transplant(delNode, x);
         } else {
-            successorNode = subTreeMin(delNode->rightChild); // can it be null?? no, at least right child exists
+            successorNode = subTreeMin(delNode->rightChild); // not null, at least right child exists
             originalColor = successorNode->color;
             x = successorNode->rightChild; // what if it is null???
-            if (x == nullptr) { //  && delNode == root_
-                // надо сделать искусственный узел в x, иначе fixup вызовется от корня и ничего не сбалансируется
+            if (x == nullptr) {
+                // надо сделать искусственный узел в x, иначе в fixup ничего не сбалансируется
                 x = initializeTreeNullForRemove(successorNode);
                 wasCreatedNil = true;
             }
 
             if (successorNode->parent != delNode) {
                 transplant(successorNode, successorNode->rightChild);
-                successorNode->rightChild = delNode->rightChild; // what if it is null??
-                successorNode->rightChild->parent = successorNode; // what if it is null??
+                successorNode->rightChild = delNode->rightChild; // now it is definitely not null
+                successorNode->rightChild->parent = successorNode;
             }
-            ///
-//            if (successorNode->parent == delNode) {
-//                if (x != nullptr) { // what if it is null???
-//                    x->parent = successorNode;
-//                }
-//            } else {
-//                transplant(successorNode, successorNode->rightChild);
-//                successorNode->rightChild = delNode->rightChild; // what if it is null??
-//                successorNode->rightChild->parent = successorNode; // what if it is null??
-////                RBNode<K, V>* succRightChild = successorNode->rightChild;
-////                succRightChild = delNode->rightChild;
-////                succRightChild->parent = successorNode;
-//            }
-            ///
+
             transplant(delNode, successorNode);
             successorNode->leftChild = delNode->leftChild;
             successorNode->leftChild->parent = successorNode;
             successorNode->color = delNode->color;
-//            RBNode<K, V>* succLeftChild = successorNode->leftChild;
-//            succLeftChild = delNode->leftChild;
-//            succLeftChild->parent = successorNode;
-//            successorNode->color = delNode->color;
         }
 
-//        delete delNode; // ???
+        delete delNode;
 
         if (originalColor == BLACK) {
             if (x != nullptr) {
@@ -621,13 +633,21 @@ public:
                 }
             } else
                 deleteFixup(successorNode);
+        } else {
+            if (wasCreatedNil) {
+                if (x->parent->leftChild == x)
+                    x->parent->leftChild = nullptr;
+                else
+                    x->parent->rightChild = nullptr;
+                delete x;
+            }
         }
 
         size_--;
     }
 
     // Возвращает true, если в ассоциативном массиве существует элемент с
-    //указанным ключом.
+    // указанным ключом.
     bool contains(const K& key) {
         return (find(key) != nullptr);
     }
@@ -639,11 +659,11 @@ public:
     //Константная версия оператора должна просто вернуть значение по
     //умолчанию.
     const V& operator[](const K& key) const {
-        V* searchResult = findValue(key);
+        const V* searchResult = findValue(key);
         if (searchResult != nullptr)
             return *searchResult;
         else
-            return getDefaultValue();
+            return * new V();
     }
 
     V& operator[](const K& key) {
@@ -651,22 +671,27 @@ public:
         if (searchResult != nullptr)
             return *searchResult;
         else {
-            insert(key, getDefaultValue());
-            return getDefaultValue();
+            insert(key, V());
+            return *findValue(key);
         }
     }
 
-    V& getDefaultValue() {
-        return *new V();
-    }
+//    V& getDefaultValue() {
+//        return *new V();
+//    }
 
     int size() const {
         return size_;
     }
 
     // Возвращает итератор, указывающий на первый элемент массива.
-    Iterator iterator();
-    const Iterator iterator() const;
+    Iterator iterator() {
+        return Iterator(*this);
+    }
+
+    const Iterator iterator() const {
+        return Iterator(*this);
+    }
 
     // Необходимо либо предоставить
     // правильный механизм копирования и присваивания, либо запретить его.
